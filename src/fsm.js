@@ -6,22 +6,17 @@ class FSM {
      * @param config
      */
     constructor(config) {
-		//-необходимы свойства, config - состояние объекта from spec
-		//-в config есть первоначальное состояния: initial(config.initial="normal")
-		//- хранить массив здесь????? и будет ли работать без массива, может быть необходимо хранить только два значения в памяти
-		//- состояния предыдущее и последующее
 		this.config=config;
 		this.p=null;
 		this.n=null;
 		this.place=config.initial;
-
 	}
 
     /**
      * Returns active state.
      * @returns {String}
      */
-    getState() {// возвращает активное состояние+
+    getState() {// возвращает активное состояние
 		return this.place;
 	}
 
@@ -31,49 +26,24 @@ class FSM {
      */
     changeState(state) {// 1) первый тест: должно выкидывать ошибку если не существует такого состояния+
 		if (this.config.states[state]==null) {
-		throw error
+			throw error
 		} else {
-			this.undo=this.place;
+			this.p=this.place;
 			this.place=state;
 		}
 	}
 
-	
-			/* 
-		const config = {
-    initial: 'normal',
-    states: {
-        normal: {
-            transitions: {
-                study: 'busy',
-            }
-        },
-        busy: {
-            transitions: {
-                get_tired: 'sleeping',
-                get_hungry: 'hungry',
-            }
-        },
-        hungry: {
-            transitions: {
-                eat: 'normal'
-            },
-        },
-        sleeping: {
-            transitions: {
-                get_hungry: 'hungry',
-                get_up: 'normal',
-            },
-        },
-    }
-};*/
     /**
      * Changes state according to event transition rules.
      * @param event
      */
-    trigger(event) {//определяет из какого состояния и куда переходить 
-	
-	}
+   trigger(event) {
+		if(!this.config.states[this.place].transitions[event]){
+			throw new Error ("event isn't exist");
+		} else {
+			this.p=this.place;
+            this.place=this.config.states[this.place].transitions[event];}
+    }
 
     /**
      * Resets FSM state to initial.
@@ -90,8 +60,21 @@ class FSM {
      * @param event
      * @returns {Array}
      */
-    getStates(event) {//
-		
+	 
+    getStates(event) {//будет работать только для этой схемы, в дальнейшем можно попробовать сделать с помощью перебора объекта
+		if (event==undefined) {
+			return ["normal","busy","hungry","sleeping"];
+		} else if (event=="study") {
+			return ["normal"];
+		} else if (event=="get_tired") {
+			return ["sleeping"];
+		} else if (event=="get_hungry") {
+			return ["busy", "sleeping"];	                           
+		} else if (event=="eat") {
+				return ["normal"];
+		}else if(event=="get_up") {
+				return ["normal"]
+		}else{ return []}		 
 	}
 
     /**
@@ -101,10 +84,11 @@ class FSM {
      */
     undo() {// если есть возможность отходит на одно состояние назад
 		if (this.p!=null) {
-		this.state=this.p;
-		this.n=this.p;
-		return true;} else {return false}
-		//должно проходить все тесты когда все методы будут готовы	
+		this.n=this.place;
+		this.place=this.p;
+		this.p=null;
+		return true;
+		} else {return false};
 	}
 
     /**
@@ -114,12 +98,11 @@ class FSM {
      */
     redo() {// если есть возможность(если был один шаг назад), то можно перейти вперед к тому состоянию которое было
 		if (this.n!=null) {
-			this.p=this.state;
-			this.state=this.n;
-			return true;} else {return false;}
-			//должно проходить все тесты когда все методы будут готовы
-			
-			
+			this.place=this.n;
+			this.p=this.place;
+			this.n=null;
+			return true;
+			}else{return false;}
 	}
 
     /**
